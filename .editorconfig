@@ -1,0 +1,57 @@
+root = true
+
+[*.py]
+indent_style = space
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.jade]
+indent_style = space
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.js]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.json]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.yml]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.css]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.scss]
+indent_style = space
+indent_size = 2
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
+
+[*.sh]
+indent_style = space
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = LF
