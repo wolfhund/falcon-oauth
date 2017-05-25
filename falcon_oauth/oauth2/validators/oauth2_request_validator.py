@@ -35,7 +35,7 @@ class OAuth2RequestValidator(RequestValidator):
         user = None
 
         try:
-            user = self.session.query(User).get(id == client.user_id)
+            user = self.session.query(User).get(User.id == client.user_id).one()
         except NoResultFound:
             pass  # TODO: log error
 
@@ -43,7 +43,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     def _get_client(self, client_id):
         try:
-            client = self.session.query(Client).filter(client_id == client_id)
+            client = self.session.query(Client).filter(Client.client_id == client_id).one()
         except NoResultFound:
             pass  # log error
 
@@ -54,11 +54,11 @@ class OAuth2RequestValidator(RequestValidator):
 
         try:
             authorization_code = self.session.query(AuthorizationCode).filter(
-                client_id=client.client_id,
-                user_id=client.user_id,
-                code=client.code,
-                scopes=client.scopes,
-            )
+                AuthorizationCode.client_id=client.client_id,
+                AuthorizationCode.user_id=client.user_id,
+                AuthorizationCode.code=client.code,
+                AuthorizationCode.scopes=client.scopes,
+            ).one()
         except NoResultFound:
             pass  # TODO: log error
 
@@ -74,9 +74,9 @@ class OAuth2RequestValidator(RequestValidator):
         bearer_token = None
         try:
             if refresh_token is not None:
-                bearer_token = self.session.query(BearerToken).filter(refresh_token=refresh_token)
+                bearer_token = self.session.query(BearerToken).filter(BearerToken.refresh_token=refresh_token).one()
             else:
-                bearer_token = self.session.query(BearerToken).filter(access_token=access_token)
+                bearer_token = self.session.query(BearerToken).filter(BearerToken.access_token=access_token).one()
         except NoResultFound:
             pass # TODO: log error
         return bearer_token
