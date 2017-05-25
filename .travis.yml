@@ -1,5 +1,10 @@
 language: python
 python:
   - "3.5"
-  - "pypy"  # PyPy2 2.5.0
+env:
+  - FALCON_DB_USER=postgres FALCON_DB_PASSWORD= FALCON_DB_HOST=localhost FALCON_DB_NAME=travis_ci_test
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres && cd falcon_oauth/oauth2 && pip install alembic psycopg2 pylint && alembic upgrade head && cd ../..
 script: python setup.py test
