@@ -41,7 +41,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = ['-s', '-q', '--color=yes', '--cov=falcon_oauth', 'tests']
+        self.pytest_args = ['-s', '-q', '--color=yes', '--cov=falcon_oauth', '--cov-config', '.coveragerc', '--cov-report', 'term:skip-covered', 'tests']
 
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
@@ -74,7 +74,7 @@ setup(name='falcon-oauth',
     author_email='paran.arnaug@gmail.com',
     license='GPL',
     packages=['falcon_oauth'],
-    install_requires=['oauthlib', 'alembic', 'psycopg2', 'falcon', 'pytz'],
+    install_requires=['oauthlib', 'alembic', 'psycopg2', 'falcon'],
     tests_require=['pytest-cov', 'pylint', 'webtest', 'factory-boy'],
     cmdclass={'test': PyTest, 'pylint': Pylint},
     zip_safe=False)

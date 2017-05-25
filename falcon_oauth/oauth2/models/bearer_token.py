@@ -10,12 +10,19 @@ from falcon_oauth.utils.database import Base
 class BearerToken(Base):  # pylint: disable=too-few-public-methods
     """BearerToken model for OAuth2.
     """
-    __tablename__ = 'bearer_token'
+    __tablename__ = 'oauth2_falcon_bearertoken'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    client_id = sa.Column(sa.Integer, sa.ForeignKey('client.id'), nullable=False)
-    user_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), nullable=True)
+    application_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('oauth2_falcon_application.id'),
+        nullable=False)
+    user_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('oauth2_falcon_user.id'),
+        nullable=True
+    )
     scopes = sa.Column(sa.Text, nullable=False)
-    access_token = sa.Column(sa.String(100), unique=True)
-    refresh_token = sa.Column(sa.String(100), unique=True)
+    access_token = sa.Column(sa.String(100), unique=True, nullable=False)
+    refresh_token = sa.Column(sa.String(100), unique=True, nullable=True)
     expires_at = sa.Column(sa.DateTime(timezone=True), nullable=False)
