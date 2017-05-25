@@ -41,7 +41,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = ['-s', '-q', '--color=yes', '--cov=falcon_oauth', 'tests']
+        self.pytest_args = ['-s', '-q', '--color=yes', '--cov=falcon_oauth', '--cov-config', '.coveragerc', '--cov-report', 'term:skip-covered', 'tests']
 
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
