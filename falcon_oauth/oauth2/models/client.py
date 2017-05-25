@@ -21,6 +21,6 @@ class Client(Base):  # pylint: disable=too-few-public-methods
     grant_type = sa.Column(sa.String(18), nullable=False)
     response_type = sa.Column(sa.String(4), nullable=False)
     scopes = sa.Column(sa.Text, nullable=True)
-    default_scope = sa.Column(sa.Text, nullable=False)
-    redirect_uri = sa.Column(sa.Text, nullable=True)
+    default_scopes = sa.Column(sa.Text, nullable=False)
+    redirect_uris = sa.Column(sa.Text, nullable=True)
     default_redirect_uri = sa.Column(sa.Text, nullable=False)
