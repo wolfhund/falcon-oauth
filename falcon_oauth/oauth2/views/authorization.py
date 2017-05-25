@@ -26,5 +26,11 @@ class Authenticate(object):
             res.body = '{"error": "server error"}'
             res.status = falcon.HTTP_500
         else:
-            res.body = 'you are on Authenticate get'
+            res.body = '<h1>Authorize access to %s</h1>' % req.params.get('client_id')
+            res.body += '<form method="POST" action="/authorize">'
+            for scope in scopes or []:
+                res.body += '<input type="checkbox" name="scopes" ' + 'value="%s"/> %s' % (scope, scope)
+            res.body += '<input type="submit" value="Authorize"/>'
+            res.body += '</form>'
+            res.content_type = 'text/html'
             res.status = falcon.HTTP_200
