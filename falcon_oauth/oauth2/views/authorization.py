@@ -26,6 +26,5 @@ class Authenticate(object):
             res.body = '{"error": "server error"}'
             res.status = falcon.HTTP_500
         else:
-
             res.body = 'you are on Authenticate get'
             res.status = falcon.HTTP_200
