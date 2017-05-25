@@ -4,13 +4,13 @@ from falcon_oauth.oauth2.validators.oauth2_request_validator import server
 
 class Authenticate(object):
     """
-    Handle for endpoint: /oauth2/auth
+    Handle for endpoint: /oauth2/auth. Authorization code grant
     """
     def __init__(self):
         self._authorization_endpoint = server
 
     def on_post(self, req, res):
-        pass
+        pass 
 
     def on_get(self, req, res):
         import logging
@@ -34,3 +34,4 @@ class Authenticate(object):
             res.body += '</form>'
             res.content_type = 'text/html'
             res.status = falcon.HTTP_200
+            print(credentials)
