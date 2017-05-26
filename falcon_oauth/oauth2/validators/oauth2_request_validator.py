@@ -3,7 +3,7 @@ Authorization Code, Refresh Token grants and for dispensing Bearer Tokens.
 """
 import datetime
 import pytz
-from oauthlib.oauth2 import RequestValidator, WebApplicationServer
+from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
@@ -346,7 +346,3 @@ class OAuth2RequestValidator(RequestValidator):
         # TODO: log.debug('Obtaining scope of refreshed token.')
         bearer_token = self._get_bearer_token(refresh_token=refresh_token)
         return bearer_token.scopes
-
-
-validator = OAuth2RequestValidator()
-server = WebApplicationServer(validator)
