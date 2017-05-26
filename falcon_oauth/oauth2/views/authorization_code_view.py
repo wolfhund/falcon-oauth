@@ -2,7 +2,7 @@ import falcon
 from falcon_oauth.oauth2.validators.oauth2_request_validator import server
 
 
-class AuthorizationCodeGrant(object):
+class AuthorizationCodeView(object):
     """
     Handle for endpoint: /oauth2/auth. Authorization code grant
     """
