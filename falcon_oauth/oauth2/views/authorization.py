@@ -10,7 +10,19 @@ class AuthorizationCodeView(object):
         self._authorization_endpoint = server
 
     def on_post(self, req, res):
-        pass 
+        ### client credentials grant ###
+        try:
+            scopes, credentials = self._authorization_endpoint.validate_authorization_request(
+                req.uri,
+                http_method=req.method,
+                body=req.stream.read(),
+                headers=req.headers
+            )
+        except Exception as e:
+            res.body = '{"error": "server error"}'
+            res.status = falcon.HTTP_500
+
+        ###
 
     def on_get(self, req, res):
         import logging
