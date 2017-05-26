@@ -1,13 +1,16 @@
 import falcon
 from falcon_oauth.oauth2.validators.oauth2_request_validator import server
+from oauthlib.oauth2 import BackendApplicationServer
+from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator
 
 
-class AuthorizationCodeView(object):
+class Authorization(object):
     """
     Handle for endpoint: /oauth2/auth. Authorization code grant
     """
     def __init__(self):
-        self._authorization_endpoint = server
+        validator = OAuth2RequestValidator()
+        self.server = BackendApplicationServer(validator)
 
     def on_post(self, req, res):
         ### client credentials grant ###
@@ -21,6 +24,9 @@ class AuthorizationCodeView(object):
         except Exception as e:
             res.body = '{"error": "server error"}'
             res.status = falcon.HTTP_500
+            raise
+        else:
+            print(scopes, credentials)
 
         ###
 
