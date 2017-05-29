@@ -10,7 +10,7 @@ from falcon_oauth.utils.database import Base
 class AuthorizationCode(Base):  # pylint: disable=too-few-public-methods
     """AuthorizationCode model for OAuth2.
     """
-    __tablename__ = 'authorization_code'
+    __tablename__ = 'oauth2_falcon_authorization_code'
 
     id = sa.Column(sa.Integer, primary_key=True)
     client_id = sa.Column(sa.Integer, sa.ForeignKey('client.id'), nullable=False)

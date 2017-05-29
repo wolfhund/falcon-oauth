@@ -10,7 +10,7 @@ from falcon_oauth.utils.database import Base
 class Client(Base):  # pylint: disable=too-few-public-methods
     """Client model for OAuth2
     """
-    __tablename__ = 'client'
+    __tablename__ = 'oauth2_falcon_client'
     # TODO: check that this attribute is being called or if it needs
     # a method to do it according to SQLAlchemy
     allowed_response_types = ('code', 'token')

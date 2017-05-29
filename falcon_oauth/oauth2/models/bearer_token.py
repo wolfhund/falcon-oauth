@@ -10,7 +10,7 @@ from falcon_oauth.utils.database import Base
 class BearerToken(Base):  # pylint: disable=too-few-public-methods
     """BearerToken model for OAuth2.
     """
-    __tablename__ = 'bearer_token'
+    __tablename__ = 'oauth2_falcon_bearer_token'
 
     id = sa.Column(sa.Integer, primary_key=True)
     client_id = sa.Column(sa.Integer, sa.ForeignKey('client.id'), nullable=False)

@@ -18,10 +18,10 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'client',
+        'oauth2_falcon_client',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('client_id', sa.String(100), nullable=False, unique=True),
-        sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id'), nullable=True),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey('oauth2_falcon_user.id'), nullable=True),
         sa.Column('grant_type', sa.String(18), nullable=False),
         sa.Column('response_type', sa.String(4), nullable=False),
         sa.Column('scopes', sa.Text, nullable=True),
@@ -32,4 +32,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('client')
+    op.drop_table('oauth2_falcon_client')

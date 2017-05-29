@@ -11,7 +11,7 @@ class User(Base):  # pylint: disable=too-few-public-methods
     """User model class based on Django 1.9.
     See https://docs.djangoproject.com/en/1.9/ref/contrib/auth/
     """
-    __tablename__ = 'user'
+    __tablename__ = 'oauth2_falcon_users'
 
     id = sa.Column(sa.Integer, primary_key=True)
     username = sa.Column(sa.String(30), nullable=False)
