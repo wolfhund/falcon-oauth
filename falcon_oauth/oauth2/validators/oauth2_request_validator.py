@@ -33,7 +33,6 @@ class OAuth2RequestValidator(RequestValidator):
     def _get_user(self, client_id):
         client = self._get_client(client_id)
         user = None
-
         try:
             user = self.session.query(User).get(User.id == client.user_id).one()
         except NoResultFound:
@@ -137,8 +136,8 @@ class OAuth2RequestValidator(RequestValidator):
 
     def save_authorization_code(self, client_id, code, request, *args, **kwargs):
         # Remember to associate it with request.scopes, request.redirect_uri
-        # request.client, request.state and request.user (the last is passed in
-        # post_authorization credentials, i.e. { 'user': request.user}.
+        # request.client, request.state and request.user_id (the last is passed in
+        # post_authorization credentials, i.e. { 'user': request.user_id}.
         authorization_code = AuthorizationCode(
             client_id=client_id,
             user_id=None,
@@ -188,7 +187,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
         # Validate the code belongs to the client. Add associated scopes,
-        # state and user to request.scopes and request.user.
+        # state and user to request.scopes and request.user_id.
         # TODO: verify that this logic is correct
         client = client or self._get_client(client_id)
         if not client:
@@ -198,7 +197,7 @@ class OAuth2RequestValidator(RequestValidator):
         if not authorization_code:
             # TODO: log error
             return False
-        request.user = authorization_code.user
+        request.user_id = authorization_code.user
         request.state = kwargs.get('state', None)
         request.scopes = authorization_code.scopes
         request.claims = kwargs.get('claims', None)
@@ -229,7 +228,7 @@ class OAuth2RequestValidator(RequestValidator):
         It is suggested that 'allowed_grant_types' should contain at least
         'authorization_code' and 'refresh_token'.
         """
-        if self._get_user(client_id) and grant_type == 'password':
+        if grant_type == 'password' and self._get_user(client_id):
             # TODO: log error
             return False
 
@@ -246,12 +245,12 @@ class OAuth2RequestValidator(RequestValidator):
             if not hasattr(client, 'user_id'):
                 # TODO: log error
                 return False
-            request.user = self._get_user(client_id)
+            request.user_id = client.user_id
 
         return True
 
     def save_bearer_token(self, token, request, *args, **kwargs):
-        # Remember to associate it with request.scopes, request.user and
+        # Remember to associate it with request.scopes, request.user_id and
         # request.client. The two former will be set when you validate
         # the authorization code. Don't forget to save both the
         # access_token and the refresh_token and set expiration for the
@@ -268,13 +267,13 @@ class OAuth2RequestValidator(RequestValidator):
         The request is an object, that contains an user object and a
         client object.
         """
-        scopes = ','.join([x.strip() for x in token['scope'].split(',')])
+        scopes = ','.join([x.strip() for x in token['scope'].split(' ')])
         bearer_token = BearerToken(
-            client_id=request.client.client_id,
-            user_id=request.user.user_id,
+            client_id=request.client.id,
+            user_id=request.user_id,
             scopes=scopes,
             access_token=token['access_token'],
-            refresh_token=token['refresh_token'],
+            refresh_token=token.get('refresh_token'),
             expires_at=(datetime.datetime.utcnow() +
                         datetime.timedelta(seconds=token['expires_in']))
         )
@@ -329,7 +328,7 @@ class OAuth2RequestValidator(RequestValidator):
             return False
 
         request.access_token = bearer_token.access_token
-        request.user = bearer_token.user_id
+        request.user_id = bearer_token.user_id
         request.scopes = scopes
 
         if hasattr(bearer_token, 'client_id'):
