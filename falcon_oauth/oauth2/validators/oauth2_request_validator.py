@@ -315,14 +315,14 @@ class OAuth2RequestValidator(RequestValidator):
 
         # validate expires
         if bearer_token.expires_at is not None and \
-                datetime.datetime.utcnow() > bearer_token.expires_at:
+                datetime.datetime.now(pytz.timezone('UTC')) > bearer_token.expires_at:
             msg = 'Bearer token is expired.'
             request.error_message = msg
             # TODO: log.debug(msg)
             return False
 
         # validate scopes
-        if scopes and not set(bearer_token.scopes) & set(scopes):
+        if scopes and not set(bearer_token.scopes.split(',')) & set(scopes):
             msg = 'Bearer token scope not valid.'
             request.error_message = msg
             # TODO: log.debug(msg)
