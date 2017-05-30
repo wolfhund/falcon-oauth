@@ -27,3 +27,7 @@ class Token(object):
             res.body = '{"error": "server error"}'
             res.status = falcon.HTTP_500
             raise
+        else:
+            res.headers = headers
+            res.body = body
+            res.status_code = status
