@@ -1,5 +1,4 @@
 import falcon
-from falcon_oauth.oauth2.validators.oauth2_request_validator import server
 from oauthlib.oauth2 import BackendApplicationServer
 from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator
 
@@ -14,8 +13,18 @@ class Authorization(object):
 
     def on_post(self, req, res):
         ### client credentials grant ###
+        headers, body, status_code = self.server.create_token_response(
+            req.uri,
+            http_method=req.method,
+            body=req.stream.read(),
+            headers=req.headers,
+        )
+        res.headers = headers
+        res.body = body
+        res.status_code = status_code
+        raise RuntimeError
         try:
-            scopes, credentials = self._authorization_endpoint.validate_authorization_request(
+            scopes, credentials = self.server.validate_authorization_request(
                 req.uri,
                 http_method=req.method,
                 body=req.stream.read(),
