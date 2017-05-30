@@ -13,31 +13,20 @@ class Authorization(object):
 
     def on_post(self, req, res):
         ### client credentials grant ###
-        headers, body, status_code = self.server.create_token_response(
-            req.uri,
-            http_method=req.method,
-            body=req.stream.read(),
-            headers=req.headers,
-        )
-        res.headers = headers
-        res.body = body
-        res.status_code = status_code
-        raise RuntimeError
         try:
-            scopes, credentials = self.server.validate_authorization_request(
+            headers, body, status_code = self.server.create_token_response(
                 req.uri,
                 http_method=req.method,
                 body=req.stream.read(),
-                headers=req.headers
+                headers=req.headers,
             )
         except Exception as e:
             res.body = '{"error": "server error"}'
             res.status = falcon.HTTP_500
             raise
-        else:
-            print(scopes, credentials)
-
-        ###
+        res.headers = headers
+        res.body = body
+        res.status_code = status_code
 
     def on_get(self, req, res):
         import logging
