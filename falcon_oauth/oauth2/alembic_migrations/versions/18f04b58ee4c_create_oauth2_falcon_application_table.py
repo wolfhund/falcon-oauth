@@ -1,4 +1,4 @@
-"""Create client table
+"""Create oauth2_falcon_application table
 
 Revision ID: 18f04b58ee4c
 Revises: 0830d2374cf3
@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'oauth2_falcon_client',
+        'oauth2_falcon_application',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('client_id', sa.String(100), nullable=False, unique=True),
         sa.Column('user_id', sa.Integer, sa.ForeignKey('oauth2_falcon_user.id'), nullable=True),
@@ -32,4 +32,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('oauth2_falcon_client')
+    op.drop_table('oauth2_falcon_application')

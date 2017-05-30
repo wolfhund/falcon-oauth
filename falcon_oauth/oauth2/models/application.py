@@ -1,5 +1,5 @@
 """
-Client oauth2 model, see
+Application oauth2 model, see
 
 https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#client-or-consumer
 """
@@ -7,10 +7,10 @@ import sqlalchemy as sa
 from falcon_oauth.utils.database import Base
 
 
-class Client(Base):  # pylint: disable=too-few-public-methods
-    """Client model for OAuth2
+class Application(Base):  # pylint: disable=too-few-public-methods
+    """Application model for OAuth2
     """
-    __tablename__ = 'oauth2_falcon_client'
+    __tablename__ = 'oauth2_falcon_application'
     # TODO: check that this attribute is being called or if it needs
     # a method to do it according to SQLAlchemy
     allowed_response_types = ('code', 'token')
