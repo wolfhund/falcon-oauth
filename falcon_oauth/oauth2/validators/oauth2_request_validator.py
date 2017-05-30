@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from falcon_oauth.utils.database import get_engine_url
-from ..models.client import Client
+from ..models.application import Application
 from ..models.user import User
 from ..models.authorization_code import AuthorizationCode
 from ..models.bearer_token import BearerToken
@@ -138,8 +138,9 @@ class OAuth2RequestValidator(RequestValidator):
         # Remember to associate it with request.scopes, request.redirect_uri
         # request.client, request.state and request.user_id (the last is passed in
         # post_authorization credentials, i.e. { 'user': request.user_id}.
+        client = request.client or self._get_client(client_id)
         authorization_code = AuthorizationCode(
-            client_id=client_id,
+            client_id=client.id,
             user_id=None,
             scopes=request.scopes,
             code=request.code,
