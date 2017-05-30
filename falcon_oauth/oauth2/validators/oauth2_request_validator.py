@@ -42,7 +42,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     def _get_client(self, client_id):
         try:
-            client = self.session.query(Client).filter(Client.client_id == client_id).one()
+            client = self.session.query(Application).filter(Application.client_id == client_id).one()
         except NoResultFound:
             pass  # log error
 
@@ -53,7 +53,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         try:
             authorization_code = self.session.query(AuthorizationCode).filter(
-                AuthorizationCode.client_id == client.client_id,
+                AuthorizationCode.application_id == client.id,
                 AuthorizationCode.user_id == client.user_id,
                 AuthorizationCode.code == client.code,
                 AuthorizationCode.scopes == client.scopes,
@@ -140,7 +140,7 @@ class OAuth2RequestValidator(RequestValidator):
         # post_authorization credentials, i.e. { 'user': request.user_id}.
         client = request.client or self._get_client(client_id)
         authorization_code = AuthorizationCode(
-            client_id=client.id,
+            application_id=client.id,
             user_id=None,
             scopes=request.scopes,
             code=request.code,
@@ -270,7 +270,7 @@ class OAuth2RequestValidator(RequestValidator):
         """
         scopes = ','.join([x.strip() for x in token['scope'].split(' ')])
         bearer_token = BearerToken(
-            client_id=request.client.id,
+            application_id=request.client.id,
             user_id=request.user_id,
             scopes=scopes,
             access_token=token['access_token'],

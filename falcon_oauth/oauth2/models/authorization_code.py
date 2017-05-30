@@ -13,7 +13,7 @@ class AuthorizationCode(Base):  # pylint: disable=too-few-public-methods
     __tablename__ = 'oauth2_falcon_authorizationcode'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    client_id = sa.Column(sa.Integer, sa.ForeignKey('oauth2_falcon_client.id'), nullable=False)
+    application_id = sa.Column(sa.Integer, sa.ForeignKey('oauth2_falcon_application.id'), nullable=False)
     user_id = sa.Column(sa.Integer, sa.ForeignKey('oauth2_falcon_user.id'), nullable=True)
     scopes = sa.Column(sa.Text, nullable=False)
     code = sa.Column(sa.String(100), unique=True)

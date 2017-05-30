@@ -20,7 +20,7 @@ def upgrade():
     op.create_table(
         'oauth2_falcon_bearertoken',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('client_id', sa.Integer, sa.ForeignKey('oauth2_falcon_client.id'), nullable=False),
+        sa.Column('application_id', sa.Integer, sa.ForeignKey('oauth2_falcon_application.id'), nullable=False),
         sa.Column('user_id', sa.Integer, sa.ForeignKey('oauth2_falcon_user.id'), nullable=True),
         sa.Column('scopes', sa.Text, nullable=False),
         sa.Column('access_token', sa.String(100), unique=True),
