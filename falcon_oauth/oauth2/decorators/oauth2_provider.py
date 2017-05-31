@@ -1,7 +1,6 @@
 import functools
 import falcon
-from oauthlib.oauth2 import BackendApplicationServer
-from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator
+from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator, server
 
 
 class OAuth2ProviderDecorator(object):
@@ -42,6 +41,4 @@ class OAuth2ProviderDecorator(object):
             return wrapper
         return decorator
 
-validator = OAuth2RequestValidator()
-server = BackendApplicationServer(validator)
 provider = OAuth2ProviderDecorator(server)
