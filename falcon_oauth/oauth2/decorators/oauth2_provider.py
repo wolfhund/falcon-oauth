@@ -1,9 +1,13 @@
+"""Decorator for the OAuth2 protection.
+"""
 import functools
 import falcon
-from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator, server
+from falcon_oauth.oauth2.validators import server
 
 
 class OAuth2ProviderDecorator(object):
+    """OAuth2 decorator to protect endpoints in views.
+    """
 
     def __init__(self, resource_endpoint):
         self._resource_endpoint = resource_endpoint
