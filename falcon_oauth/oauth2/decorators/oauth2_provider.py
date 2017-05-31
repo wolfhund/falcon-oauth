@@ -27,8 +27,10 @@ class OAuth2ProviderDecorator(object):
         :param scopes: list A list containing the scopes for the page.
         :return: decorator
         """
-        def decorator(f):
-            @functools.wraps(f)
+        def decorator(func):
+            """
+            """
+            @functools.wraps(func)
             def wrapper(self_obj, req, res, *args, **kwargs):
                 """A wrapper for the called request method.
                 :param self_obj: Object An self instance of the view.
@@ -56,7 +58,7 @@ class OAuth2ProviderDecorator(object):
                 #    'scopes': r.scopes
                 #})
                 if valid:
-                    return f(self_obj, req, res)
+                    return func(self_obj, req, res)
                 else:
                     # Framework specific HTTP 403
                     res.body = '{"error": "forbidden"}'
