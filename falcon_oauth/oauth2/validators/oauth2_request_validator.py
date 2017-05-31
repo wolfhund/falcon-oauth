@@ -346,3 +346,6 @@ class OAuth2RequestValidator(RequestValidator):
         # TODO: log.debug('Obtaining scope of refreshed token.')
         bearer_token = self._get_bearer_token(refresh_token=refresh_token)
         return bearer_token.scopes
+
+validator = OAuth2RequestValidator()
+server = Server(validator)
