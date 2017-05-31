@@ -1,1 +1,1 @@
-from .oauth2_request_validator import OAuth2ProviderDecorator, server
+from .oauth2_request_validator import server
