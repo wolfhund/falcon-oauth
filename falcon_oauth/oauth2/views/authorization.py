@@ -1,6 +1,5 @@
 import falcon
-from oauthlib.oauth2 import BackendApplicationServer
-from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator
+from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator, server
 
 
 class Authorization(object):
@@ -8,8 +7,7 @@ class Authorization(object):
     Handle for endpoint: /oauth2/auth. Authorization code grant
     """
     def __init__(self):
-        validator = OAuth2RequestValidator()
-        self.server = BackendApplicationServer(validator)
+        self.server = server
 
     def on_post(self, req, res):
         ### client credentials grant ###
