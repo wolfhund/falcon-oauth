@@ -58,7 +58,7 @@ class BasicApplication(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disab
         sqlalchemy_session = session
         sqlalchemy_session_persistence = 'commit'
 
-    client_id = 'test'
+    client_id = factory.LazyFunction(_id_generator)
     grant_type = 'authorization_code'
     response_type = ''
     scopes = factory.LazyAttribute(lambda a: a.default_scopes)
@@ -140,9 +140,10 @@ class TestOAuthApp(TestApp):  # pylint: disable=too-few-public-methods,too-many-
         self.options = self._add_auth_headers(self.options)
         self.head = self._add_auth_headers(self.head)
 
-    def authenticate(self, application_id, scopes):
+    def authenticate(self, application_id, user_id, scopes):
         #TODO validate the scopes and the application_id
         token = BasicBearerToken(application_id=application_id,
+                                 user_id=user_id,
                                  scopes=scopes)
         self.auth_headers['Authorization'] = 'Bearer {}'.format(token.access_token)
 
