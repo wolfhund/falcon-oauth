@@ -2,7 +2,6 @@
 Authorization Code, Refresh Token grants and for dispensing Bearer Tokens.
 """
 import datetime
-import pytz
 from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,12 +14,7 @@ from ..models.bearer_token import BearerToken
 
 
 class OAuth2RequestValidator(RequestValidator):
-    """OAuth2 Request Validator class for Authorization grant flow.
-    """
-
-    # Ordered roughly in order of appearance in the authorization grant flow
-
-    # Pre- and post-authorization.
+    """OAuth2 Request Validator class for Authorization grant flow."""
     def __init__(self):
         engine = create_engine(get_engine_url())
         Session = sessionmaker(bind=engine)  # pylint: disable=invalid-name
@@ -28,10 +22,17 @@ class OAuth2RequestValidator(RequestValidator):
         self.expires_in = 3600  # seconds
 
     def _get_user(self, client_id):
+        """Get User model related to Application model.
+
+        :param client_id: str The hash string of the application.
+        :return: User SQLAlchemy instance of User model.
+        """
+
         client = self._get_client(client_id)
         user = None
         try:
-            user = self.session.query(User).get(User.id == client.user_id).one()
+            user = self.session.query(User)
+                .get(User.id == client.user_id).one()
         except NoResultFound:
             pass  # TODO: log error
 
@@ -141,7 +142,7 @@ class OAuth2RequestValidator(RequestValidator):
             user_id=None,
             scopes=request.scopes,
             code=request.code,
-            expires_at=(datetime.datetime.now(pytz.timezone('UTC')) +
+            expires_at=(datetime.datetime.now(tz=datetime.timezone.utc) +
                         datetime.timedelta(seconds=self.expires_in))
         )
         self.session.add(authorization_code)
@@ -272,7 +273,7 @@ class OAuth2RequestValidator(RequestValidator):
             scopes=scopes,
             access_token=token['access_token'],
             refresh_token=token.get('refresh_token'),
-            expires_at=(datetime.datetime.utcnow() +
+            expires_at=(datetime.datetime.now(tz=datetime.timezone.utc) +
                         datetime.timedelta(seconds=token['expires_in']))
         )
         self.session.add(bearer_token)
@@ -312,7 +313,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         # validate expires
         if bearer_token.expires_at is not None and \
-                datetime.datetime.now(pytz.timezone('UTC')) > bearer_token.expires_at:
+                datetime.datetime.now(tz=datetime.timezone.utc) > bearer_token.expires_at:
             msg = 'Bearer token is expired.'
             request.error_message = msg
             # TODO: log.debug(msg)
