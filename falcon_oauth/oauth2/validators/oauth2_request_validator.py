@@ -7,14 +7,11 @@ from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.ext.declarative import declarative_base
 from falcon_oauth.utils.database import get_engine_url
 from ..models.application import Application
 from ..models.user import User
 from ..models.authorization_code import AuthorizationCode
 from ..models.bearer_token import BearerToken
-
-Base = declarative_base()
 
 
 class OAuth2RequestValidator(RequestValidator):
