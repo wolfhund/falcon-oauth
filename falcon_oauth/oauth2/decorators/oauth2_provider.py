@@ -35,7 +35,7 @@ def add_params(obj, attributes_dict):
             setattr(obj.scopes, key, value)
 
 
-class OAuth2ProviderDecorator(object):  # pylint: disable=too-few-public-methods
+class OAuth2ProviderDecorator(object):  # pylint: disable=R0903
     """OAuth2 decorator to protect endpoints in views."""
     def __init__(self, resource_endpoint):
         self._resource_endpoint = resource_endpoint
@@ -46,7 +46,7 @@ class OAuth2ProviderDecorator(object):  # pylint: disable=too-few-public-methods
         :return: decorator
         """
         def decorator(method):
-            """Decorator method to handle a function.
+            """Decorator method handler.
             :param method: def A method defined when calling the decorator.
             """
             @functools.wraps(method)
