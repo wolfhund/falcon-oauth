@@ -11,7 +11,7 @@ class OAuth2ProviderDecorator(object):
     def __init__(self, resource_endpoint):
         self._resource_endpoint = resource_endpoint
 
-    def get_dynamic_scopes(self, request):
+    def _get_dynamic_scopes(self, request):
         # Place code here to dynamically determine the scopes
         # and return as a list
         try:
@@ -22,47 +22,64 @@ class OAuth2ProviderDecorator(object):
             scopes = [word.strip() for word in request_scopes.split(',')]
             return scopes
 
+    def _add_params(self, obj, attributes_dict):
+        """Add dictionary pair of key and value to instantiated object as attributes.
+        :param obj: Object An instance of the object.
+        :param attributes_dict: dict A dictionary of attributes with values.
+        """
+        obj.client = lambda: None
+        obj.user = lambda: None
+        obj.scopes = lambda: None
+
+        for key, value in attributes_dict.items():
+            if key == 'client':
+                setattr(obj.client, key, value)
+            elif key == 'user':
+                setattr(obj.user, key, value)
+            else:
+                setattr(obj.scopes, key, value)
+
     def protected_resource_view(self, scopes=None):
         """Verify request and throw error if not valid.
         :param scopes: list A list containing the scopes for the page.
         :return: decorator
         """
-        def decorator(func):
+        def decorator(method):
             """
             """
-            @functools.wraps(func)
-            def wrapper(self_obj, req, res, *args, **kwargs):
+            @functools.wraps(method)
+            def wrapper(self_obj, falcon_req, falcon_res, *args, **kwargs):
                 """A wrapper for the called request method.
                 :param self_obj: Object An self instance of the view.
-                :param req: Object The request object instance of Falcon.
-                :param res: Object The response object instance of Falcon.
+                :param falcon_req: Object The request object instance of Falcon.
+                :param falcon_res: Object The response object instance of Falcon.
                 """
                 # Get the list of scopes
                 try:
-                    scopes_list = get_dynamic_scopes(req)
+                    scopes_list = self._get_dynamic_scopes(falcon_req)
                 except TypeError:
                     scopes_list = scopes
 
-                valid, r = self._resource_endpoint.verify_request(
-                        req.uri, 
-                        req.method, 
-                        req.stream.read(), 
-                        req.headers, 
-                        scopes
+                valid, oauthlib_req = self._resource_endpoint.verify_request(
+                    falcon_req.uri, 
+                    falcon_req.method, 
+                    falcon_req.stream.read(), 
+                    falcon_req.headers, 
+                    scopes
                 )
-
                 # For convenient parameter access in the view
-                #add_params(req, {
-                #    'client': r.client,
-                #    'user': r.user,
-                #    'scopes': r.scopes
-                #})
+                self._add_params(falcon_req, {
+                    'client': oauthlib_req.client,
+                    'user': oauthlib_req.user,
+                    'scopes': oauthlib_req.scopes
+                })
+
                 if valid:
-                    return func(self_obj, req, res)
+                    return method(self_obj, falcon_req, falcon_res)
                 else:
                     # Framework specific HTTP 403
-                    res.body = '{"error": "forbidden"}'
-                    res.status = falcon.HTTP_403
+                    falcon_res.body = '{"error": "forbidden"}'
+                    falcon_res.status = falcon.HTTP_403
             return wrapper
         return decorator
 
