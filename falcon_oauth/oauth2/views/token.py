@@ -1,10 +1,9 @@
 """Token view file."""
-import falcon
 from falcon_oauth.oauth2.validators import server
 
 
 class Token(object):  # pylint: disable=too-few-public-methods
-    """Token view class. Handle requests to /token"""
+    """Token view class. Handle requests to /oauth2/token"""
     def __init__(self):
         self._token_endpoint = server
 

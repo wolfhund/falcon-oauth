@@ -3,21 +3,17 @@ Authorization Code, Refresh Token grants and for dispensing Bearer Tokens.
 """
 import datetime
 from oauthlib.oauth2 import RequestValidator, Server
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
-from falcon_oauth.utils.database import get_engine_url
-from ..models.application import Application
-from ..models.user import User
-from ..models.authorization_code import AuthorizationCode
-from ..models.bearer_token import BearerToken
+from falcon_oauth.oauth2.models.application import Application
+from falcon_oauth.oauth2.models.user import User
+from falcon_oauth.oauth2.models.authorization_code import AuthorizationCode
+from falcon_oauth.oauth2.models.bearer_token import BearerToken
+from falcon_oauth.utils.database import Session
 
 
 class OAuth2RequestValidator(RequestValidator):
     """OAuth2 Request Validator class for Authorization grant flow."""
     def __init__(self):
-        engine = create_engine(get_engine_url())
-        Session = sessionmaker(bind=engine)  # pylint: disable=invalid-name
         self.session = Session()
         self.expires_in = 3600  # seconds
 
@@ -25,22 +21,29 @@ class OAuth2RequestValidator(RequestValidator):
         """Get User model related to Application model.
 
         :param client_id: str The hash string of the application.
-        :return: User SQLAlchemy instance of User model.
+        :return: Object SQLAlchemy instance of User model.
         """
-
         client = self._get_client(client_id)
         user = None
         try:
-            user = self.session.query(User)
-                .get(User.id == client.user_id).one()
+            user = self.session.query(User).get(
+                User.id == client.user_id
+            ).one()
         except NoResultFound:
             pass  # TODO: log error
 
         return user
 
     def _get_client(self, client_id):
+        """Get Application instance by given client_id hash
+
+        :param client_id: Object An SQLAlchemy instance of Application model.
+        :return: Object The Application instance model.
+        """
         try:
-            client = self.session.query(Application).filter(Application.client_id == client_id).one()
+            client = self.session.query(Application).filter(
+                Application.client_id == client_id
+            ).one()
         except NoResultFound:
             pass  # log error
 
@@ -69,13 +72,19 @@ class OAuth2RequestValidator(RequestValidator):
             raise ValueError('You should pass a refresh_token, '
                              'or an access_token, not nothing')
         bearer_token = None
+
         try:
             if refresh_token is not None:
-                bearer_token = self.session.query(BearerToken).filter(BearerToken.refresh_token == refresh_token).one()
+                bearer_token = self.session.query(BearerToken).filter(
+                    BearerToken.refresh_token == refresh_token
+                ).one()
             else:
-                bearer_token = self.session.query(BearerToken).filter(BearerToken.access_token == access_token).one()
+                bearer_token = self.session.query(BearerToken).filter(
+                    BearerToken.access_token == access_token
+                ).one()
         except NoResultFound:
-            pass # TODO: log error
+            pass  # TODO: log error
+
         return bearer_token
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
@@ -88,14 +97,17 @@ class OAuth2RequestValidator(RequestValidator):
             return True
         return False
 
-    def validate_redirect_uri(self, client_id, redirect_uri, request, *args, **kwargs):
+    def validate_redirect_uri(self, client_id, redirect_uri,
+                              request, *args, **kwargs):
         # Is the client allowed to use the supplied redirect_uri? i.e. has
         # the client previously registered this EXACT redirect uri.
         request.client = request.client or self._get_client(client_id)
 
         client = request.client
         if client:
-            redirect_uris_list = [uri.strip() for uri in client.redirect_uris.split(',')]
+            redirect_uris_list = [
+                uri.strip() for uri in client.redirect_uris.split(',')
+            ]
 
         return redirect_uri in redirect_uris_list
 
@@ -123,19 +135,20 @@ class OAuth2RequestValidator(RequestValidator):
         # TODO  log.debug('Found default scopes %r', scopes)
         return default_scopes
 
-    def validate_response_type(self, client_id, response_type, client, request, *args, **kwargs):
+    def validate_response_type(self, client_id, response_type, client, request,
+                               *args, **kwargs):
         # Clients should only be allowed to use one type of response type, the
         # one associated with their one allowed grant type.
         # In this case it must be "code".
         request.client = client or self._get_client(client_id)
         return response_type in request.client.allowed_response_types
 
-    # Post-authorization
-
-    def save_authorization_code(self, client_id, code, request, *args, **kwargs):
+    def save_authorization_code(self, client_id, code, request, *args,
+                                **kwargs):
         # Remember to associate it with request.scopes, request.redirect_uri
-        # request.client, request.state and request.user_id (the last is passed in
-        # post_authorization credentials, i.e. { 'user': request.user_id}.
+        # request.client, request.state and request.user_id
+        # ( the last is passed in post_authorization credentials,
+        # i.e. { 'user': request.user_id} )
         client = request.client or self._get_client(client_id)
         authorization_code = AuthorizationCode(
             application_id=client.id,
@@ -149,11 +162,9 @@ class OAuth2RequestValidator(RequestValidator):
         self.session.commit()
         # TODO: handle rollback in exception
 
-    # Token request
-
     def authenticate_client(self, request, *args, **kwargs):
         # Whichever authentication method suits you, HTTP Basic might work
-        # TODO: log.debug('Authenticate client %r', client_id)
+        # TODO: log.debug('Authenticate client %r', client_id)
         client = self._get_client(request.client_id)
         if not client:
             # TODO log.debug('Authenticate client failed, client not found.')
@@ -202,7 +213,8 @@ class OAuth2RequestValidator(RequestValidator):
         request.claims = kwargs.get('claims', None)
         return True
 
-    def confirm_redirect_uri(self, client_id, code, redirect_uri, client, request, *args, **kwargs):
+    def confirm_redirect_uri(self, client_id, code, redirect_uri, client, 
+                             request, *args, **kwargs):
         # You did save the redirect uri with the authorization code right?
         client = client or self._get_client(client_id)
         if not client:

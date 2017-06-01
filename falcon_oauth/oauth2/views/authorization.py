@@ -1,3 +1,4 @@
+"""Authorization handler."""
 import falcon
 from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator, server
 
@@ -10,18 +11,17 @@ class Authorization(object):
         self.server = server
 
     def on_post(self, req, res):
-        ### client credentials grant ###
-        try:
-            headers, body, status_code = self.server.create_token_response(
-                req.uri,
-                http_method=req.method,
-                body=req.stream.read(),
-                headers=req.headers,
-            )
-        except Exception as e:
-            res.body = '{"error": "server error"}'
-            res.status = falcon.HTTP_500
-            raise
+        """Create access token.
+
+        :param req: Object A Falcon Request instance.
+        :param res: Object A Falcon Response instance.
+        """
+        headers, body, status_code = self.server.create_token_response(
+            req.uri,
+            http_method=req.method,
+            body=req.stream.read(),
+            headers=req.headers,
+        )
         res.headers = headers
         res.body = body
         res.status_code = status_code
