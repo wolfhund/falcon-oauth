@@ -2,50 +2,50 @@
 Authorization Code, Refresh Token grants and for dispensing Bearer Tokens.
 """
 import datetime
-import pytz
-from oauthlib.oauth2 import RequestValidator, WebApplicationServer
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import logging
+from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.ext.declarative import declarative_base
-from falcon_oauth.utils.database import get_engine_url
-from ..models.client import Client
-from ..models.user import User
-from ..models.authorization_code import AuthorizationCode
-from ..models.bearer_token import BearerToken
-
-Base = declarative_base()
+from falcon_oauth.oauth2.models import Application, User, AuthorizationCode, BearerToken
+from falcon_oauth.utils.database import Session
 
 
 class OAuth2RequestValidator(RequestValidator):
-    """OAuth2 Request Validator class for Authorization grant flow.
-    """
-
-    # Ordered roughly in order of appearance in the authorization grant flow
-
-    # Pre- and post-authorization.
+    """OAuth2 Request Validator class for Authorization grant flow."""
     def __init__(self):
-        engine = create_engine(get_engine_url())
-        Session = sessionmaker(bind=engine)  # pylint: disable=invalid-name
         self.session = Session()
         self.expires_in = 3600  # seconds
 
     def _get_user(self, client_id):
+        """Get User model related to Application model.
+
+        :param client_id: str The hash string of the application.
+        :return: Object SQLAlchemy instance of User model.
+        """
         client = self._get_client(client_id)
         user = None
-
         try:
-            user = self.session.query(User).get(id == client.user_id)
+            user = self.session.query(User).get(
+                User.id == client.user_id
+            ).one()
         except NoResultFound:
-            pass  # TODO: log error
+            # TODO: log error
+            return False
 
         return user
 
     def _get_client(self, client_id):
+        """Get Application instance by given client_id hash
+
+        :param client_id: Object An SQLAlchemy instance of Application model.
+        :return: Object The Application instance model.
+        """
         try:
-            client = self.session.query(Client).filter(client_id == client_id)
+            client = self.session.query(Application).filter(
+                Application.client_id == client_id
+            ).one()
         except NoResultFound:
-            pass  # log error
+            # log error
+            return False
 
         return client
 
@@ -54,31 +54,49 @@ class OAuth2RequestValidator(RequestValidator):
 
         try:
             authorization_code = self.session.query(AuthorizationCode).filter(
-                client_id=client.client_id,
-                user_id=client.user_id,
-                code=client.code,
-                scopes=client.scopes,
-            )
+                AuthorizationCode.application_id == client.id,
+                AuthorizationCode.user_id == client.user_id,
+                AuthorizationCode.code == client.code,
+                AuthorizationCode.scopes == client.scopes,
+            ).one()
         except NoResultFound:
-            pass  # TODO: log error
+            # TODO: log error
+            return False
 
         return authorization_code
 
     def _get_bearer_token(self, refresh_token=None, access_token=None):
         if refresh_token is not None and access_token is not None:
-            raise ValueError('You should pass either a refresh_token, '
-                             'either an access_token, not both')
+            logging.getLogger(__name__).warning(
+                'Tried to pass refresh token: %(refresh_token)s and'
+                'access token: %(access_token)s',
+                {'refresh_token': refresh_token, 'access_token': access_token})
+            return False
         if refresh_token is None and access_token is None:
-            raise ValueError('You should pass a refresh_token, '
-                             'or an access_token, not nothing')
+            logging.getLogger(__name__).warning(
+                'Tried to get bearer token with neither refresh token,'
+                'neither access token')
+            return False
         bearer_token = None
+
         try:
             if refresh_token is not None:
-                bearer_token = self.session.query(BearerToken).filter(refresh_token=refresh_token)
+                bearer_token = self.session.query(BearerToken).filter(
+                    BearerToken.refresh_token == refresh_token
+                ).one()
             else:
-                bearer_token = self.session.query(BearerToken).filter(access_token=access_token)
+                bearer_token = self.session.query(BearerToken).filter(
+                    BearerToken.access_token == access_token
+                ).one()
         except NoResultFound:
-            pass # TODO: log error
+            if access_token is not None:
+                logging.getLogger(__name__).warning(
+                    'No bearer token found for access token: %s', access_token)
+            if refresh_token is not None:
+                logging.getLogger(__name__).warning(
+                    'No bearer token found for refresh token: %s', refresh_token)
+            return False
+
         return bearer_token
 
     def validate_client_id(self, client_id, request, *args, **kwargs):
@@ -91,14 +109,17 @@ class OAuth2RequestValidator(RequestValidator):
             return True
         return False
 
-    def validate_redirect_uri(self, client_id, redirect_uri, request, *args, **kwargs):
+    def validate_redirect_uri(self, client_id, redirect_uri,
+                              request, *args, **kwargs):
         # Is the client allowed to use the supplied redirect_uri? i.e. has
         # the client previously registered this EXACT redirect uri.
         request.client = request.client or self._get_client(client_id)
 
         client = request.client
         if client:
-            redirect_uris_list = [uri.strip() for uri in client.redirect_uris.split(',')]
+            redirect_uris_list = [
+                uri.strip() for uri in client.redirect_uris.split(',')
+            ]
 
         return redirect_uri in redirect_uris_list
 
@@ -114,9 +135,9 @@ class OAuth2RequestValidator(RequestValidator):
     def validate_scopes(self, client_id, scopes, client, request, *args, **kwargs):
         # Is the client allowed to access the requested scopes?
         request.client = client or self._get_client(client_id)
-        default_scopes = [scope.strip() for scope in request.client.default_scopes.split(',')]
+        client_scopes = [scope.strip() for scope in request.client.scopes.split(',')]
         # TODO: log if scopes is not a list of strings
-        return set(default_scopes).issuperset(set(scopes))
+        return set(client_scopes).issuperset(set(scopes))
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         # Scopes a client will authorize for if none are supplied in the
@@ -126,36 +147,36 @@ class OAuth2RequestValidator(RequestValidator):
         # TODO  log.debug('Found default scopes %r', scopes)
         return default_scopes
 
-    def validate_response_type(self, client_id, response_type, client, request, *args, **kwargs):
+    def validate_response_type(self, client_id, response_type, client, request,
+                               *args, **kwargs):
         # Clients should only be allowed to use one type of response type, the
         # one associated with their one allowed grant type.
         # In this case it must be "code".
         request.client = client or self._get_client(client_id)
         return response_type in request.client.allowed_response_types
 
-    # Post-authorization
-
-    def save_authorization_code(self, client_id, code, request, *args, **kwargs):
+    def save_authorization_code(self, client_id, code, request, *args,
+                                **kwargs):
         # Remember to associate it with request.scopes, request.redirect_uri
-        # request.client, request.state and request.user (the last is passed in
-        # post_authorization credentials, i.e. { 'user': request.user}.
+        # request.client, request.state and request.user_id
+        # ( the last is passed in post_authorization credentials,
+        # i.e. { 'user': request.user_id} )
+        client = request.client or self._get_client(client_id)
         authorization_code = AuthorizationCode(
-            client_id=client_id,
+            application_id=client.id,
             user_id=None,
             scopes=request.scopes,
             code=request.code,
-            expires_at=(datetime.datetime.now(pytz.timezone('UTC')) +
+            expires_at=(datetime.datetime.now(tz=datetime.timezone.utc) +
                         datetime.timedelta(seconds=self.expires_in))
         )
         self.session.add(authorization_code)
         self.session.commit()
         # TODO: handle rollback in exception
 
-    # Token request
-
     def authenticate_client(self, request, *args, **kwargs):
         # Whichever authentication method suits you, HTTP Basic might work
-        # TODO: log.debug('Authenticate client %r', client_id)
+        # TODO: log.debug('Authenticate client %r', client_id)
         client = self._get_client(request.client_id)
         if not client:
             # TODO log.debug('Authenticate client failed, client not found.')
@@ -188,7 +209,7 @@ class OAuth2RequestValidator(RequestValidator):
 
     def validate_code(self, client_id, code, client, request, *args, **kwargs):
         # Validate the code belongs to the client. Add associated scopes,
-        # state and user to request.scopes and request.user.
+        # state and user to request.scopes and request.user_id.
         # TODO: verify that this logic is correct
         client = client or self._get_client(client_id)
         if not client:
@@ -198,13 +219,14 @@ class OAuth2RequestValidator(RequestValidator):
         if not authorization_code:
             # TODO: log error
             return False
-        request.user = authorization_code.user
+        request.user_id = authorization_code.user
         request.state = kwargs.get('state', None)
         request.scopes = authorization_code.scopes
         request.claims = kwargs.get('claims', None)
         return True
 
-    def confirm_redirect_uri(self, client_id, code, redirect_uri, client, request, *args, **kwargs):
+    def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
+                             request, *args, **kwargs):
         # You did save the redirect uri with the authorization code right?
         client = client or self._get_client(client_id)
         if not client:
@@ -229,7 +251,7 @@ class OAuth2RequestValidator(RequestValidator):
         It is suggested that 'allowed_grant_types' should contain at least
         'authorization_code' and 'refresh_token'.
         """
-        if self._get_user(client_id) and grant_type == 'password':
+        if grant_type == 'password' and self._get_user(client_id):
             # TODO: log error
             return False
 
@@ -246,12 +268,12 @@ class OAuth2RequestValidator(RequestValidator):
             if not hasattr(client, 'user_id'):
                 # TODO: log error
                 return False
-            request.user = self._get_user(client_id)
+            request.user_id = client.user_id
 
         return True
 
     def save_bearer_token(self, token, request, *args, **kwargs):
-        # Remember to associate it with request.scopes, request.user and
+        # Remember to associate it with request.scopes, request.user_id and
         # request.client. The two former will be set when you validate
         # the authorization code. Don't forget to save both the
         # access_token and the refresh_token and set expiration for the
@@ -268,14 +290,14 @@ class OAuth2RequestValidator(RequestValidator):
         The request is an object, that contains an user object and a
         client object.
         """
-        scopes = ','.join([x.strip() for x in token['scope'].split(',')])
+        scopes = ','.join([x.strip() for x in token['scope'].split(' ')])
         bearer_token = BearerToken(
-            client_id=request.client.client_id,
-            user_id=request.user.user_id,
+            application_id=request.client.id,
+            user_id=request.user_id,
             scopes=scopes,
             access_token=token['access_token'],
-            refresh_token=token['refresh_token'],
-            expires_at=(datetime.datetime.utcnow() +
+            refresh_token=token.get('refresh_token'),
+            expires_at=(datetime.datetime.now(tz=datetime.timezone.utc) +
                         datetime.timedelta(seconds=token['expires_in']))
         )
         self.session.add(bearer_token)
@@ -315,21 +337,21 @@ class OAuth2RequestValidator(RequestValidator):
 
         # validate expires
         if bearer_token.expires_at is not None and \
-                datetime.datetime.utcnow() > bearer_token.expires_at:
+                datetime.datetime.now(tz=datetime.timezone.utc) > bearer_token.expires_at:
             msg = 'Bearer token is expired.'
             request.error_message = msg
             # TODO: log.debug(msg)
             return False
 
         # validate scopes
-        if scopes and not set(bearer_token.scopes) & set(scopes):
+        if scopes and not set(bearer_token.scopes.split(',')) & set(scopes):
             msg = 'Bearer token scope not valid.'
             request.error_message = msg
             # TODO: log.debug(msg)
             return False
 
         request.access_token = bearer_token.access_token
-        request.user = bearer_token.user_id
+        request.user_id = bearer_token.user_id
         request.scopes = scopes
 
         if hasattr(bearer_token, 'client_id'):
@@ -345,8 +367,9 @@ class OAuth2RequestValidator(RequestValidator):
         # request.
         # TODO: log.debug('Obtaining scope of refreshed token.')
         bearer_token = self._get_bearer_token(refresh_token=refresh_token)
+        if not bearer_token:
+            return False
         return bearer_token.scopes
 
-
 validator = OAuth2RequestValidator()
-server = WebApplicationServer(validator)
+server = Server(validator)
