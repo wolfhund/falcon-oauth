@@ -2,6 +2,8 @@
 import falcon
 from falcon_oauth.oauth2.validators.oauth2_request_validator import OAuth2RequestValidator, server
 
+from .falcon_status_codes import FALCON_STATUS_CODES
+
 
 class Authorization(object):
     """
@@ -16,7 +18,7 @@ class Authorization(object):
         :param req: Object A Falcon Request instance.
         :param res: Object A Falcon Response instance.
         """
-        headers, body, status_code = self.server.create_token_response(
+        headers, body, status = self.server.create_token_response(
             req.uri,
             http_method=req.method,
             body=req.stream.read(),
@@ -24,11 +26,9 @@ class Authorization(object):
         )
         res.headers = headers
         res.body = body
-        res.status_code = status_code
+        res.status = FALCON_STATUS_CODES[status]
 
     def on_get(self, req, res):
-        import logging
-        logging.getLogger(__name__).debug('test')
         try:
             scopes, credentials = self._authorization_endpoint.validate_authorization_request(
                 req.uri,

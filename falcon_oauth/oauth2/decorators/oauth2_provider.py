@@ -1,20 +1,9 @@
 """Decorator for the OAuth2 protection.
 """
+import logging
 import functools
 import falcon
 from falcon_oauth.oauth2.validators import server
-
-
-def get_dynamic_scopes(request):
-    # Place code here to dynamically determine the scopes
-    # and return as a list
-    try:
-        request_scopes = request.scopes  # i.e. request.scopes="write,read"
-    except AttributeError:
-        raise
-    else:
-        scopes = [word.strip() for word in request_scopes.split(',')]
-        return scopes
 
 
 def add_params(obj, attributes_dict):
@@ -50,40 +39,42 @@ class OAuth2ProviderDecorator(object):  # pylint: disable=R0903
             :param method: def A method defined when calling the decorator.
             """
             @functools.wraps(method)
-            def wrapper(*args, **kwargs):
+            def wrapper(self_decorated, req, resp, *args, **kwargs):
                 """Wrapper method for decorator.
 
+                :param req: the request object
+                :param resp: the response object
                 :param *args: Variable length argument list.
                 :param **kwargs: Arbitrary keyword arguments.
                 """
-                falcon_req = args[1]
-                falcon_res = args[2]
-
                 try:
-                    scopes_list = self.get_dynamic_scopes(falcon_req)
-                except AttributeError:
+                    scopes_list = scopes(req)
+                except TypeError:
                     scopes_list = scopes
 
                 valid, oauthlib_req = self._resource_endpoint.verify_request(
-                    falcon_req.uri,
-                    falcon_req.method,
-                    falcon_req.stream.read(),
-                    falcon_req.headers,
+                    req.uri,
+                    req.method,
+                    req.stream.read(),
+                    req.headers,
                     scopes_list
                 )
 
                 # For convenient parameter access in the view
-                add_params(falcon_req, {
+                add_params(req, {
                     'client': oauthlib_req.client,
                     'user': oauthlib_req.user,
                     'scopes': oauthlib_req.scopes
                 })
 
                 if valid:
-                    return method(*args, **kwargs)
+                    return method(self_decorated, req, resp, *args, **kwargs)
                 else:
-                    falcon_res.body = '{"error": "forbidden"}'
-                    falcon_res.status = falcon.HTTP_403
+                    logging.getLogger(__name__).warning(
+                        'forbidden access for uri: %s headers: %s',
+                        req.relative_uri, req.headers)
+                    resp.body = '{"error": "forbidden"}'
+                    resp.status = falcon.HTTP_403
 
             return wrapper
 

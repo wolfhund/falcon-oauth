@@ -2,6 +2,7 @@
 Authorization Code, Refresh Token grants and for dispensing Bearer Tokens.
 """
 import datetime
+import logging
 from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy.orm.exc import NoResultFound
 from falcon_oauth.oauth2.models.application import Application
@@ -30,7 +31,8 @@ class OAuth2RequestValidator(RequestValidator):
                 User.id == client.user_id
             ).one()
         except NoResultFound:
-            pass  # TODO: log error
+            # TODO: log error
+            return False
 
         return user
 
@@ -45,7 +47,8 @@ class OAuth2RequestValidator(RequestValidator):
                 Application.client_id == client_id
             ).one()
         except NoResultFound:
-            pass  # log error
+            # log error
+            return False
 
         return client
 
@@ -60,17 +63,23 @@ class OAuth2RequestValidator(RequestValidator):
                 AuthorizationCode.scopes == client.scopes,
             ).one()
         except NoResultFound:
-            pass  # TODO: log error
+            # TODO: log error
+            return False
 
         return authorization_code
 
     def _get_bearer_token(self, refresh_token=None, access_token=None):
         if refresh_token is not None and access_token is not None:
-            raise ValueError('You should pass either a refresh_token, '
-                             'either an access_token, not both')
+            logging.getLogger(__name__).warning(
+                'Tried to pass refresh token: %(refresh_token)s and'
+                'access token: %(access_token)s',
+                {'refresh_token': refresh_token, 'access_token': access_token})
+            return False
         if refresh_token is None and access_token is None:
-            raise ValueError('You should pass a refresh_token, '
-                             'or an access_token, not nothing')
+            logging.getLogger(__name__).warning(
+                'Tried to get bearer token with neither refresh token,'
+                'neither access token')
+            return False
         bearer_token = None
 
         try:
@@ -83,7 +92,13 @@ class OAuth2RequestValidator(RequestValidator):
                     BearerToken.access_token == access_token
                 ).one()
         except NoResultFound:
-            pass  # TODO: log error
+            if access_token is not None:
+                logging.getLogger(__name__).warning(
+                    'No bearer token found for access token: %s', access_token)
+            if refresh_token is not None:
+                logging.getLogger(__name__).warning(
+                    'No bearer token found for refresh token: %s', refresh_token)
+            return False
 
         return bearer_token
 
@@ -123,9 +138,9 @@ class OAuth2RequestValidator(RequestValidator):
     def validate_scopes(self, client_id, scopes, client, request, *args, **kwargs):
         # Is the client allowed to access the requested scopes?
         request.client = client or self._get_client(client_id)
-        default_scopes = [scope.strip() for scope in request.client.default_scopes.split(',')]
+        client_scopes = [scope.strip() for scope in request.client.scopes.split(',')]
         # TODO: log if scopes is not a list of strings
-        return set(default_scopes).issuperset(set(scopes))
+        return set(client_scopes).issuperset(set(scopes))
 
     def get_default_scopes(self, client_id, request, *args, **kwargs):
         # Scopes a client will authorize for if none are supplied in the
@@ -213,7 +228,7 @@ class OAuth2RequestValidator(RequestValidator):
         request.claims = kwargs.get('claims', None)
         return True
 
-    def confirm_redirect_uri(self, client_id, code, redirect_uri, client, 
+    def confirm_redirect_uri(self, client_id, code, redirect_uri, client,
                              request, *args, **kwargs):
         # You did save the redirect uri with the authorization code right?
         client = client or self._get_client(client_id)
@@ -355,6 +370,8 @@ class OAuth2RequestValidator(RequestValidator):
         # request.
         # TODO: log.debug('Obtaining scope of refreshed token.')
         bearer_token = self._get_bearer_token(refresh_token=refresh_token)
+        if not bearer_token:
+            return False
         return bearer_token.scopes
 
 validator = OAuth2RequestValidator()

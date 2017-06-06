@@ -1,6 +1,8 @@
 """Token view file."""
 from falcon_oauth.oauth2.validators import server
 
+from .falcon_status_codes import FALCON_STATUS_CODES
+
 
 class Token(object):  # pylint: disable=too-few-public-methods
     """Token view class. Handle requests to /oauth2/token"""
@@ -25,4 +27,4 @@ class Token(object):  # pylint: disable=too-few-public-methods
         )
         res.headers = headers
         res.body = body
-        res.status_code = status
+        res.status = FALCON_STATUS_CODES[status]
