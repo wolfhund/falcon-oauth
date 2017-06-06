@@ -18,10 +18,10 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'bearer_token',
+        'oauth2_falcon_bearertoken',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('client_id', sa.Integer, sa.ForeignKey('client.id'), nullable=False),
-        sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id'), nullable=True),
+        sa.Column('application_id', sa.Integer, sa.ForeignKey('oauth2_falcon_application.id'), nullable=False),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey('oauth2_falcon_user.id'), nullable=True),
         sa.Column('scopes', sa.Text, nullable=False),
         sa.Column('access_token', sa.String(100), unique=True),
         sa.Column('refresh_token', sa.String(100), unique=True),
@@ -30,4 +30,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('bearer_token')
+    op.drop_table('oauth2_falcon_bearertoken')
