@@ -1,0 +1,2 @@
+[run]
+omit = falcon_oauth/oauth2/alembic_migrations/*
