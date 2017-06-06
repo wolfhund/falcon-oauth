@@ -1,8 +1,8 @@
 """Token view file."""
 from falcon_oauth.oauth2.validators import server
+from falcon.util import get_http_status
 
-from .falcon_status_codes import FALCON_STATUS_CODES
-
+from .utils import handle_error
 
 class Token(object):  # pylint: disable=too-few-public-methods
     """Token view class. Handle requests to /oauth2/token"""
@@ -18,13 +18,16 @@ class Token(object):  # pylint: disable=too-few-public-methods
         # If you wish to include request specific extra credentials for
         # use in the validator, do so here.
         credentials = {'foo': 'bar'}
-        headers, body, status = self._token_endpoint.create_token_response(
-            req.uri,
-            http_method=req.method,
-            body=req.stream.read(),
-            headers=req.headers,
-            credentials=credentials
-        )
-        res.headers = headers
-        res.body = body
-        res.status = FALCON_STATUS_CODES[status]
+        try:
+            headers, body, status = self._token_endpoint.create_token_response(
+                req.uri,
+                http_method=req.method,
+                body=req.stream.read(),
+                headers=req.headers,
+                credentials=credentials)
+        except Exception:  # pylint: disable=broad-except
+            handle_error(req, res)
+        else:
+            res.headers = headers
+            res.body = body
+            res.status = get_http_status(status)

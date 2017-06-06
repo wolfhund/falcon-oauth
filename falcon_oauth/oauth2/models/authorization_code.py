@@ -4,6 +4,7 @@ the authorization code model, see
 https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#authorization-code
 """
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 from falcon_oauth.utils.database import Base
 
 
@@ -23,6 +24,7 @@ class AuthorizationCode(Base):  # pylint: disable=too-few-public-methods
         sa.ForeignKey('oauth2_falcon_user.id'),
         nullable=True
     )
+    user = relationship('User')
     scopes = sa.Column(sa.Text, nullable=False)
     code = sa.Column(sa.String(100), unique=True)
     expires_at = sa.Column(sa.DateTime(timezone=True), nullable=False)

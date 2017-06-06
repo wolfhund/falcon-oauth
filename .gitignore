@@ -65,8 +65,6 @@ node_modules
 tags
 .*.swp
 
-/models.py
-
 # virtualenv #
 ##############
 venv/

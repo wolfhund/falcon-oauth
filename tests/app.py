@@ -1,3 +1,4 @@
+import json
 import falcon
 
 from falcon_oauth.oauth2.views.authorization import Authorization
@@ -16,10 +17,11 @@ api.add_route(TOKEN_URI, token_view)
 
 
 def _post_scopes(req):
-    if req.headers.get('HTTP_CLIENT_ID', '') == '8.8.8.8':
+    import logging
+    logging.getLogger('tests').debug(req.headers.get('HTTP-CLIENT-ID'))
+    if req.headers.get('HTTP-CLIENT-ID', '') == '8.8.8.8':
         return ['default_post']
-    else:
-        return []
+    return ['not_available']
 
 
 class ProtectedEndpoint(object):
@@ -30,12 +32,21 @@ class ProtectedEndpoint(object):
 
     @provider.protected_resource_view(scopes=['default_get'])
     def on_get(self, req, resp):
-        resp.body = '{"ok": "ok"}'
+        resp.body = json.dumps(
+                {
+                    'client': req.client.client_id,
+                    'user': req.user.id,
+                    'scopes': req.scopes
+                })
 
     @provider.protected_resource_view(scopes=_post_scopes)
     def on_post(self, req, resp):
-        resp.body = '{"ok": "ok"}'
-
+        resp.body = json.dumps(
+                {
+                    'client': req.client.client_id,
+                    'user': req.user.id,
+                    'scopes': req.scopes
+                })
 
 protected_endpoint = ProtectedEndpoint()  # pylint: disable=invalid-name
 PROTECTED_ENDPOINT_URI = '/protected_resource'

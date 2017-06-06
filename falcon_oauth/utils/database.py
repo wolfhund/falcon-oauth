@@ -6,12 +6,13 @@ from sqlalchemy import create_engine
 
 
 def get_engine_url():
-    """Get url to use for sqlalchemy."""
-    return "postgresql://%s:%s@%s/%s" % (
-        os.getenv("FALCON_DB_USER", "DB_USER"),
-        os.getenv("FALCON_DB_PASSWORD", "DB_PASSWORD"),
-        os.getenv("FALCON_DB_HOST", "DB_HOST"),
-        os.getenv("FALCON_DB_NAME", "DB_NAME"),
+    """Get url to use for sqlalchemy.
+    """
+    return "postgresql://{user}:{password}@{host}/{dbname}".format(
+        user=os.getenv("FALCON_DB_USER", "DB_USER"),
+        password=os.getenv("FALCON_DB_PASSWORD", "DB_PASSWORD"),
+        host=os.getenv("FALCON_DB_HOST", "DB_HOST"),
+        dbname=os.getenv("FALCON_DB_NAME", "DB_NAME"),
     )
 
 # Base class for SQLAlchemy

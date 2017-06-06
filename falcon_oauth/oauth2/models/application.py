@@ -4,6 +4,7 @@ Application oauth2 model, see
 https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#client-or-consumer
 """
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 from falcon_oauth.utils.database import Base
 
 
@@ -22,9 +23,12 @@ class Application(Base):  # pylint: disable=too-few-public-methods
         sa.ForeignKey('oauth2_falcon_user.id'),
         nullable=True
     )
+    user = relationship('User')
     grant_type = sa.Column(sa.String(18), nullable=False)
     response_type = sa.Column(sa.String(4), nullable=False)
     scopes = sa.Column(sa.Text, nullable=True)
+    # ex: "modify_profile,access_billing
     default_scopes = sa.Column(sa.Text, nullable=False)
+    # ex: "http://example.com/auth,http://oauth.amazon.com/"
     redirect_uris = sa.Column(sa.Text, nullable=True)
     default_redirect_uri = sa.Column(sa.Text, nullable=False)

@@ -11,17 +11,9 @@ def add_params(obj, attributes_dict):
     :param obj: Object An instance of the object.
     :param attributes_dict: dict A dictionary of attributes with values.
     """
-    obj.client = lambda: None
-    obj.user = lambda: None
-    obj.scopes = lambda: None
-
-    for key, value in attributes_dict.items():
-        if key == 'client':
-            setattr(obj.client, key, value)
-        elif key == 'user':
-            setattr(obj.user, key, value)
-        else:
-            setattr(obj.scopes, key, value)
+    obj.client = attributes_dict.get('client', None)
+    obj.user = attributes_dict.get('user', None)
+    obj.scopes = attributes_dict.get('scopes', None)
 
 
 class OAuth2ProviderDecorator(object):  # pylint: disable=too-few-public-methods
