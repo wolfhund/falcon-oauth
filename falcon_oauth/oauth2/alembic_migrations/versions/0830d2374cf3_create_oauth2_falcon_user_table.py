@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        'user',
+        'oauth2_falcon_user',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('username', sa.String(30), nullable=False),
         sa.Column('first_name', sa.String(30), nullable=True),
@@ -35,4 +35,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('user')
+    op.drop_table('oauth2_falcon_user')
