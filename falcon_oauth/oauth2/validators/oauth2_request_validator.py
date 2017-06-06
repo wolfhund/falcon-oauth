@@ -5,10 +5,7 @@ import datetime
 import logging
 from oauthlib.oauth2 import RequestValidator, Server
 from sqlalchemy.orm.exc import NoResultFound
-from falcon_oauth.oauth2.models.application import Application
-from falcon_oauth.oauth2.models.user import User
-from falcon_oauth.oauth2.models.authorization_code import AuthorizationCode
-from falcon_oauth.oauth2.models.bearer_token import BearerToken
+from falcon_oauth.oauth2.models import Application, User, AuthorizationCode, BearerToken
 from falcon_oauth.utils.database import Session
 
 

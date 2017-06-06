@@ -1,3 +1,6 @@
+"""
+the falcon error status to use with oauthlib
+"""
 import falcon
 
 FALCON_STATUS_CODES = {

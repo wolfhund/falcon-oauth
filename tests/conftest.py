@@ -9,10 +9,7 @@ import factory.alchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from falcon_oauth.utils.database import get_engine_url
-from falcon_oauth.oauth2.models.application import Application
-from falcon_oauth.oauth2.models.user import User
-from falcon_oauth.oauth2.models.authorization_code import AuthorizationCode
-from falcon_oauth.oauth2.models.bearer_token import BearerToken
+from falcon_oauth.oauth2.models import Application, User, AuthorizationCode, BearerToken
 
 from webtest import TestApp
 from .app import api
