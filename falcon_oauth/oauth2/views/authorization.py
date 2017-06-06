@@ -1,11 +1,15 @@
-"""Authorization handler."""
+"""
+the authorization endpoint for oauth2 cf
+
+https://oauthlib.readthedocs.io/en/latest/oauth2/endpoints/authorization.html
+"""
 import logging
 import falcon
+from falcon.util import get_http_status
 from oauthlib.oauth2.rfc6749.errors import (MissingClientIdError, InvalidClientIdError,
                                             MissingResponseTypeError)
 from falcon_oauth.oauth2.validators.oauth2_request_validator import server
-
-from .falcon_status_codes import FALCON_STATUS_CODES
+from .utils import handle_error
 
 
 class Authorization(object):
@@ -29,7 +33,7 @@ class Authorization(object):
         )
         resp.headers = headers
         resp.body = body
-        resp.status = FALCON_STATUS_CODES[status]
+        resp.status = get_http_status(status)
 
     def on_get(self, req, resp):
         try:
@@ -47,9 +51,7 @@ class Authorization(object):
             resp.body = '{"error": "unsupported_grant_type"}'
             resp.status = falcon.HTTP_400
         except Exception:  # pylint: disable=broad-except
-            logging.exception('Exception occured during authorization get')
-            resp.body = '{"error": "server_error"}'
-            resp.status = falcon.HTTP_500
+            handle_error(req, resp)
         else:
             resp.body = ('<h1>Authorize access to {}</h1>'
                          .format(req.params.get('client_id')))
