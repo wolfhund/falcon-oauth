@@ -67,7 +67,7 @@ class Pylint(TestCommand):
 
 
 setup(name='falcon-oauth',
-    version='0.0.2',
+    version='0.0.3',
     description='package to integrate oauth2 with falcon',
     url='https://github.com/wolfhund/falcon-oauth',
     author='Carlos Martinez, Arnaud Paran',
