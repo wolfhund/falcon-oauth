@@ -77,4 +77,5 @@ setup(name='falcon-oauth',
     install_requires=['oauthlib', 'alembic', 'psycopg2', 'falcon'],
     tests_require=['pytest-cov', 'pylint', 'webtest', 'factory-boy'],
     cmdclass={'test': PyTest, 'pylint': Pylint},
+    include_package_data=True,
     zip_safe=False)
