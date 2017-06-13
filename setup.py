@@ -5,7 +5,7 @@
 import sys
 import logging.config
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -73,7 +73,7 @@ setup(name='falcon-oauth',
     author='Carlos Martinez, Arnaud Paran',
     author_email='paran.arnaug@gmail.com',
     license='GPL',
-    packages=['falcon_oauth'],
+    packages=find_packages(exclude=['tests']),
     install_requires=['oauthlib', 'alembic', 'psycopg2', 'falcon'],
     tests_require=['pytest-cov', 'pylint', 'webtest', 'factory-boy'],
     cmdclass={'test': PyTest, 'pylint': Pylint},
