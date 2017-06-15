@@ -1,9 +1,8 @@
 import json
 import falcon
 
-from falcon_oauth.oauth2.views.authorization import Authorization
-from falcon_oauth.oauth2.views.token import Token
-from falcon_oauth.oauth2.decorators.oauth2_provider import provider
+from falcon_oauth.oauth2.views import Authorization, Token
+from falcon_oauth.oauth2.decorators import provider
 
 application = api = falcon.API()  # pylint: disable=invalid-name
 

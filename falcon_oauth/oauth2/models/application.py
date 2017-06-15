@@ -6,6 +6,7 @@ https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#client-or-consumer
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 from falcon_oauth.utils.database import Base
+from falcon_oauth.utils.database import Session
 
 
 class Application(Base):  # pylint: disable=too-few-public-methods
@@ -16,6 +17,7 @@ class Application(Base):  # pylint: disable=too-few-public-methods
     # a method to do it according to SQLAlchemy
     allowed_response_types = ('code', 'token')
 
+    query = Session.query_property()
     id = sa.Column(sa.Integer, primary_key=True)
     client_id = sa.Column(sa.String(100), nullable=False, unique=True)
     user_id = sa.Column(

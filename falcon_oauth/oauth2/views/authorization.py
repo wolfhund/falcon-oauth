@@ -25,15 +25,19 @@ class Authorization(object):
         :param req: Object A Falcon Request instance.
         :param resp: Object A Falcon Response instance.
         """
-        headers, body, status = self.server.create_token_response(
-            req.uri,
-            http_method=req.method,
-            body=req.stream.read(),
-            headers=req.headers,
-        )
-        resp.headers = headers
-        resp.body = body
-        resp.status = get_http_status(status)
+        try:
+            headers, body, status = self.server.create_token_response(
+                req.uri,
+                http_method=req.method,
+                body=req.stream.read(),
+                headers=req.headers,
+            )
+        except Exception:
+            handle_error(req, resp)
+        else:
+            resp.headers = headers
+            resp.body = body
+            resp.status = get_http_status(status)
 
     def on_get(self, req, resp):
         try:

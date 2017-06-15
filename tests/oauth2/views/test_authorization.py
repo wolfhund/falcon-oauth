@@ -22,9 +22,7 @@ def test_not_authorized_with_incorrect_client_id(webtest_app):
 
 def test_authorized_with_correct_client(clear_database, model_factory, webtest_app):
     clear_database()
-    user = model_factory.save_user()
-    app = model_factory.save_application(
-        user_id=user.id)
+    app = model_factory.save_application()
     resp = webtest_app.post(
         AUTHORIZATION_URI,
         params={'grant_type': 'client_credentials', 'client_id': app.client_id},
@@ -45,18 +43,14 @@ def test_authorization_get_wrong_client(webtest_app):
 
 def test_authorization_get_without_grant(clear_database, model_factory, webtest_app):
     clear_database()
-    user = model_factory.save_user()
-    app = model_factory.save_application(
-        user_id=user.id)
+    app = model_factory.save_application()
     resp = webtest_app.get(AUTHORIZATION_URI, {'client_id': app.client_id}, status=400)
     assert resp.body == b'{"error": "unsupported_grant_type"}'
 
 
 def test_authorization_get(clear_database, model_factory, webtest_app):
     clear_database()
-    user = model_factory.save_user()
-    app = model_factory.save_application(
-        user_id=user.id)
+    app = model_factory.save_application()
     webtest_app.get(
         AUTHORIZATION_URI,
         {'response_type': 'code', 'client_id': app.client_id},
