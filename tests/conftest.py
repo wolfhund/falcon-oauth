@@ -6,10 +6,8 @@ import string
 import pytest
 import factory
 import factory.alchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from falcon_oauth.utils.database import get_engine_url
 from falcon_oauth.oauth2.models import Application, User, AuthorizationCode, BearerToken
+from falcon_oauth.utils.database import Session
 
 from webtest import TestApp
 from .app import api
@@ -22,25 +20,10 @@ def _id_generator(size=20, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-engine = create_engine(get_engine_url())  # pylint: disable=invalid-name
-Session = sessionmaker(bind=engine)  # pylint: disable=invalid-name
-session = Session()  # pylint: disable=invalid-name
-
-
-class BasicAuthorizationCode(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-few-public-methods
-    class Meta:  # pylint: disable=too-few-public-methods
-        model = AuthorizationCode
-        sqlalchemy_session = session
-        sqlalchemy_session_persistence = 'commit'
-
-    expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
-
-
 class BasicUser(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-few-public-methods
     class Meta:  # pylint: disable=too-few-public-methods
         model = User
-        sqlalchemy_session = session
-        sqlalchemy_session_persistence = 'commit'
+        sqlalchemy_session = Session
 
     username = 'testusr'
     email = 'test@user.com'
@@ -55,10 +38,11 @@ class BasicUser(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-
 class BasicApplication(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-few-public-methods
     class Meta:  # pylint: disable=too-few-public-methods
         model = Application
-        sqlalchemy_session = session
-        sqlalchemy_session_persistence = 'commit'
+        sqlalchemy_session = Session
 
     client_id = factory.LazyFunction(_id_generator)
+    user = factory.SubFactory(BasicUser)
+    user_id = factory.LazyAttribute(lambda a: a.user.id)
     grant_type = 'authorization_code'
     response_type = ''
     scopes = factory.LazyAttribute(lambda a: a.default_scopes)
@@ -67,13 +51,28 @@ class BasicApplication(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disab
     default_redirect_uri = 'http://test.url/auth'
 
 
+class BasicAuthorizationCode(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-few-public-methods
+    class Meta:  # pylint: disable=too-few-public-methods
+        model = AuthorizationCode
+        sqlalchemy_session = Session
+
+    application = factory.SubFactory(BasicApplication)
+    application_id = factory.LazyAttribute(lambda a: a.application.id)
+    user = factory.SubFactory(BasicUser)
+    user_id = factory.LazyAttribute(lambda a: a.user.id)
+    expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+
+
 class BasicBearerToken(factory.alchemy.SQLAlchemyModelFactory):  # pylint: disable=too-few-public-methods
     class Meta:  # pylint: disable=too-few-public-methods
         model = BearerToken
-        sqlalchemy_session = session
-        sqlalchemy_session_persistence = 'commit'
+        sqlalchemy_session = Session
 
+    application = factory.SubFactory(BasicApplication)
+    application_id = factory.LazyAttribute(lambda a: a.application.id)
     access_token = factory.LazyFunction(_id_generator)
+    user = factory.SubFactory(BasicUser)
+    user_id = factory.LazyAttribute(lambda a: a.user.id)
     refresh_token = factory.LazyFunction(_id_generator)
     expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
 
@@ -86,15 +85,10 @@ def clear_database():
     I don't think it's optimized but i've not seen other ways of doing that
     """
     def clear():
-        session.commit()
-        session.query(BearerToken).delete()
-        session.commit()
-        session.query(AuthorizationCode).delete()
-        session.commit()
-        session.query(Application).delete()
-        session.commit()
-        session.query(User).delete()
-        session.commit()
+        BearerToken.query.delete()
+        AuthorizationCode.query.delete()
+        Application.query.delete()
+        User.query.delete()
 
     return clear
 
@@ -139,13 +133,21 @@ class TestOAuthApp(TestApp):  # pylint: disable=too-few-public-methods,too-many-
         self.delete = self._add_auth_headers(self.delete)
         self.options = self._add_auth_headers(self.options)
         self.head = self._add_auth_headers(self.head)
+        self.application = None
+        self.user = None
+        self.token = None
+        self.scopes = None
 
-    def authenticate(self, application_id, user_id, scopes):
+    def authenticate(self, application=None, user=None, scopes=''):
         #TODO validate the scopes and the application_id
-        token = BasicBearerToken(application_id=application_id,
-                                 user_id=user_id,
-                                 scopes=scopes)
-        self.auth_headers['Authorization'] = 'Bearer {}'.format(token.access_token)
+        self.user = user or BasicUser()
+        self.scopes = scopes
+        self.application = application or BasicApplication(
+            user=self.user, default_scopes=self.scopes)
+        self.token = BasicBearerToken(application=self.application,
+                                      user=self.user,
+                                      scopes=self.scopes)
+        self.auth_headers['Authorization'] = 'Bearer {}'.format(self.token.access_token)
 
     def _add_auth_headers(self, func):
 

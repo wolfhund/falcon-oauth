@@ -44,11 +44,9 @@ def test_token_page_serves(webtest_app):
 
 def test_token_page_sends_401_with_bad_code(webtest_app, model_factory, clear_database):
     clear_database()
-    user = model_factory.save_user()
     app = model_factory.save_application(
         client_id='test',
-        grant_type='authorization_code',
-        user_id=user.id)
+        grant_type='authorization_code')
 
     request_params = {'grant_type': app.grant_type,
                       'code': 'test',
@@ -57,47 +55,33 @@ def test_token_page_sends_401_with_bad_code(webtest_app, model_factory, clear_da
 
 def test_token_page_fails_with_expired_code(webtest_app, model_factory, clear_database):
     clear_database()
-    user = model_factory.save_user()
-    app = model_factory.save_application(
-        client_id='test',
-        grant_type='authorization_code',
-        default_scopes='default_scope',
-        redirect_uris='http://test.redirect.com',
-        user_id=user.id)
     auth_code = model_factory.save_authorization_code(
-        application_id=app.id,
-        user_id=user.id,
-        scopes=app.default_scopes,
+        scopes='default_scope',
         code='testcode',
         expires_at=datetime.now(tz=timezone.utc) - timedelta(hours=1))
+    auth_code.application.grant_type = 'authorization_code'
+    auth_code.application.redirect_uris = 'http://test.redirect.com'
 
-    request_params = {'grant_type': app.grant_type,
+    request_params = {'grant_type': auth_code.application.grant_type,
                       'code': auth_code.code,
-                      'client_id': app.client_id,
-                      'redirect_uri': app.redirect_uris,
-                      'scope': app.default_scopes}
+                      'client_id': auth_code.application.client_id,
+                      'redirect_uri': auth_code.application.redirect_uris,
+                      'scope': auth_code.application.default_scopes}
     resp = webtest_app.post(TOKEN_URI, request_params, status=401)  # pylint: disable=unused-variable
 
 def test_token_page_sends_token_with_good_request(webtest_app, model_factory, clear_database):
     clear_database()
-    user = model_factory.save_user()
-    app = model_factory.save_application(
-        client_id='test',
-        grant_type='authorization_code',
-        default_scopes='default_scope',
-        redirect_uris='http://test.redirect.com',
-        user_id=user.id)
     auth_code = model_factory.save_authorization_code(
-        application_id=app.id,
-        user_id=user.id,
-        scopes=app.default_scopes,
+        scopes='default_scope',
         code='testcode')
+    auth_code.application.grant_type = 'authorization_code'
+    auth_code.application.redirect_uris = 'http://test.redirect.com'
 
-    request_params = {'grant_type': app.grant_type,
+    request_params = {'grant_type': auth_code.application.grant_type,
                       'code': auth_code.code,
-                      'client_id': app.client_id,
-                      'redirect_uri': app.redirect_uris,
-                      'scope': app.default_scopes}
+                      'client_id': auth_code.application.client_id,
+                      'redirect_uri': auth_code.application.redirect_uris,
+                      'scope': auth_code.application.default_scopes}
     resp = webtest_app.post(TOKEN_URI, request_params)
     assert resp.status_code == 200
     resp_data = json.loads(resp.body.decode('utf-8'))

@@ -5,6 +5,7 @@ https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#user-or-resource-ow
 """
 import sqlalchemy as sa
 from falcon_oauth.utils.database import Base
+from falcon_oauth.utils.database import Session
 
 
 class User(Base):  # pylint: disable=too-few-public-methods
@@ -13,6 +14,7 @@ class User(Base):  # pylint: disable=too-few-public-methods
     """
     __tablename__ = 'oauth2_falcon_user'
 
+    query = Session.query_property()
     id = sa.Column(sa.Integer, primary_key=True)
     username = sa.Column(sa.String(30), nullable=False)
     first_name = sa.Column(sa.String(30), nullable=True)

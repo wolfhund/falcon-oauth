@@ -6,6 +6,7 @@ https://oauthlib.readthedocs.io/en/latest/oauth2/server.html#bearer-token-oauth-
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 from falcon_oauth.utils.database import Base
+from falcon_oauth.utils.database import Session
 
 
 class BearerToken(Base):  # pylint: disable=too-few-public-methods
@@ -13,6 +14,7 @@ class BearerToken(Base):  # pylint: disable=too-few-public-methods
     """
     __tablename__ = 'oauth2_falcon_bearertoken'
 
+    query = Session.query_property()
     id = sa.Column(sa.Integer, primary_key=True)
     application_id = sa.Column(
         sa.Integer,
