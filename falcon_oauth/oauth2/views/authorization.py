@@ -32,7 +32,7 @@ class Authorization(object):
                 body=req.stream.read(),
                 headers=req.headers,
             )
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             handle_error(req, resp)
         else:
             resp.headers = headers
