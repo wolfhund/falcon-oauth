@@ -31,7 +31,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         return user
 
-    def _get_client(self, client_id):
+    def _get_client(self, client_id):  # pylint: disable=no-self-use
         """Get Application instance by given client_id hash
 
         :param client_id: Object An SQLAlchemy instance of Application model.
@@ -46,7 +46,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         return client
 
-    def _get_authorization_code(self, client, code):
+    def _get_authorization_code(self, client, code):  # pylint: disable=no-self-use
         authorization_code = False
 
         try:
@@ -59,7 +59,7 @@ class OAuth2RequestValidator(RequestValidator):
 
         return authorization_code
 
-    def _get_bearer_token(self, refresh_token=None, access_token=None):
+    def _get_bearer_token(self, refresh_token=None, access_token=None):  # pylint: disable=no-self-use
         if refresh_token is not None and access_token is not None:
             return False
         if refresh_token is None and access_token is None:
@@ -150,7 +150,7 @@ class OAuth2RequestValidator(RequestValidator):
             code=request.code,
             expires_at=(datetime.now(tz=timezone.utc) +
                         timedelta(seconds=self.expires_in)))
-        Session.add(authorization_code)
+        Session.add(authorization_code)  # pylint: disable=no-member
 
     def authenticate_client(self, request, *args, **kwargs):
         # Whichever authentication method suits you, HTTP Basic might work
@@ -278,7 +278,7 @@ class OAuth2RequestValidator(RequestValidator):
             refresh_token=token.get('refresh_token'),
             expires_at=(datetime.now(tz=timezone.utc) +
                         timedelta(seconds=token['expires_in'])))
-        Session.add(bearer_token)
+        Session.add(bearer_token)  # pylint: disable=no-member
         logging.getLogger(__name__).debug('New token stored: %s', bearer_token.id)
 
         return request.client.default_redirect_uri
@@ -288,7 +288,7 @@ class OAuth2RequestValidator(RequestValidator):
         # has been acquired.
         client = request.client or self._get_client(client_id)
         authorization_code = self._get_authorization_code(client, code)
-        Session.delete(authorization_code)
+        Session.delete(authorization_code)  # pylint: disable=no-member
         logging.getLogger(__name__).debug('Authorization code invalidated')
 
     # Protected resource request
@@ -347,5 +347,5 @@ class OAuth2RequestValidator(RequestValidator):
             return False
         return bearer_token.scopes
 
-validator = OAuth2RequestValidator()
-server = Server(validator)
+validator = OAuth2RequestValidator()  # pylint: disable=invalid-name
+server = Server(validator)  # pylint: disable=invalid-name
