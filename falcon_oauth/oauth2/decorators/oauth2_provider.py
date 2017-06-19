@@ -1,6 +1,7 @@
 """Decorator for the OAuth2 protection.
 """
 import logging
+import io
 import functools
 import falcon
 from falcon_oauth.oauth2.validators import server
@@ -14,6 +15,7 @@ def add_params(obj, attributes_dict):
     obj.client = attributes_dict.get('client', None)
     obj.user = attributes_dict.get('user', None)
     obj.scopes = attributes_dict.get('scopes', None)
+    obj.stream = io.StringIO(attributes_dict.get('body', b''))
 
 
 class OAuth2ProviderDecorator(object):  # pylint: disable=too-few-public-methods
@@ -56,7 +58,8 @@ class OAuth2ProviderDecorator(object):  # pylint: disable=too-few-public-methods
                 add_params(req, {
                     'client': oauthlib_req.client,
                     'user': oauthlib_req.user,
-                    'scopes': oauthlib_req.scopes
+                    'scopes': oauthlib_req.scopes,
+                    'body': oauthlib_req.body
                 })
 
                 if valid:
