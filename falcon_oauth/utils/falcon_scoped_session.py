@@ -1,3 +1,6 @@
+"""
+module to create scoped sessions specific to falcon
+"""
 import threading
 
 from sqlalchemy.util import ScopedRegistry
@@ -10,7 +13,7 @@ class FalconOauthRegistry(ScopedRegistry):
     A scoped registry for a thread for falcon database
     """
 
-    def __init__(self, createfunc):
+    def __init__(self, createfunc):  # pylint: disable=super-init-not-called
         self.createfunc = createfunc
         self.registry = threading.local()
 
@@ -33,13 +36,13 @@ class FalconOauthRegistry(ScopedRegistry):
         except AttributeError:
             pass
 
-class falcon_oauth_session(scoped_session):
+class falcon_oauth_session(scoped_session):  # pylint: disable=invalid-name
 
     """
     Database session for a thread for falcon_oauth
     """
 
-    def __init__(self, session_factory, scopefunc=None):
+    def __init__(self, session_factory, scopefunc=None):  # pylint: disable=super-init-not-called
         self.session_factory = session_factory
 
         if scopefunc:
